@@ -170,7 +170,7 @@ int data_msg_handler(struct DataMessage *data_msg) {
 
     struct Message *itr = msg_queue->next;
     while (itr != NULL) {
-        if (itr->send == data_msg->sender && itr->msg_id == data_msg->msg_id) break;
+        if (itr->sender == data_msg->sender && itr->msg_id == data_msg->msg_id) break;
         itr = itr->next;
     }
 
