@@ -39,6 +39,7 @@ int msg_count = 0;
 int max_msg_count = 0;
 int seq = 0;
 int hostlist_len = 0;
+int reliable_flag = 0;
 
 pthread_mutex_t seq_lock;
 
@@ -459,7 +460,7 @@ int main(int argc, char* argv[]) {
         }
 
         // send data_msg randomly
-        if (SEND_FLAG && msg_count < max_msg_count) {
+        if (msg_count < max_msg_count) {
             struct Message *tmp_msg = (struct Message *) malloc(MSG_SIZE);
             tmp_msg->seq = -1;
             tmp_msg->seq_proposer = -1;
@@ -489,6 +490,8 @@ int main(int argc, char* argv[]) {
             pthread_create(new_thread_id, NULL, (void *) send_data_msg, &cur_msg_count);
             // increase counter
             msg_count ++;
+        } else {
+            reliable_flag = 1;
         }
 
         // for test
@@ -503,9 +506,9 @@ int main(int argc, char* argv[]) {
         //     }
         // }
 
-        if (loop_count == 1500 && RELIABLE_FLAG) {
+        if (loop_count % 1500  == 0 && reliable_flag > 0) {
             loop_count = 0;
-            for (int itr = 0; itr <= msg_count; itr++) {
+            for (int itr = 0; itr < msg_count; itr++) {
                 while (ack_list[itr].list.next != NULL) {
                     struct AckRecord *tmp = ack_list[itr].list.next;
                     ack_list[itr].list.next = tmp->next;
