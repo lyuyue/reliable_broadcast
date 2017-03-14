@@ -482,10 +482,10 @@ int main(int argc, char* argv[]) {
         // for test
         for (int i = 0; i <= msg_count; i ++) {
             if (ack_list[i].list.next != NULL) {
-                printf("Ack for msg %d\n", i);
+                printf("\nAck for msg %d\n", i);
                 struct AckRecord *itr = &ack_list[i].list;
                 while (itr->next != NULL) {
-                    printf("%d ", itr->receiver_id);
+                    printf("%d ", itr->next->receiver_id);
                     itr = itr->next;
                 }
             }
