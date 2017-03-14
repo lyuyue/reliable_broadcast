@@ -27,13 +27,14 @@ int self_sock;
 struct sockaddr_in self_addr;
 
 int sockfd[MAX_HOST];
-struct addrinfo hints, *info, *addr_ptr;
+struct addrinfo hints, *res, *addr_ptr;
 struct sockaddr_in *remote_addr;
 
 struct AckRecordHeader ack_list[MAX_MSG_COUNT];
 
 int port = 0;
 char *hostfile;
+char *port_str;
 int msg_count = 0;
 int max_msg_count = 0;
 int seq = 0;
@@ -288,6 +289,7 @@ int main(int argc, char* argv[]) {
     for (; arg_itr < argc; arg_itr ++) {
         if (strcmp(argv[arg_itr], "-p") == 0) {
             arg_itr ++;
+            port_str = (char *) argv[arg_itr];
             port = atoi(argv[arg_itr]);
             continue;
         }
@@ -327,27 +329,20 @@ int main(int argc, char* argv[]) {
         }
 
         memset(&hints, 0, sizeof(struct addrinfo));
-        hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
+        hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = AI_CANONNAME;
 
-        if (getaddrinfo(line_buffer, "http", &hints, &info) != 0) {
+        if (getaddrinfo(line_buffer, port_str, &hints, &res) != 0) {
             perror("getaddrinfo() error");
             return -1;
         }
 
-        sockfd[hostlist_len] = -1;
-        remote_addr = (struct sockaddr_in *) &info->ai_addr;
-        remote_addr->sin_family = AF_INET;
-        remote_addr->sin_port = htons(port);
-
-        if ((sockfd[hostlist_len] = socket(AF_INET,SOCK_STREAM,0)) < 0) {
+        if ((sockfd[hostlist_len] = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0) {
             perror("socket() error");
             return -1;
         }
 
-        if (connect(sockfd[hostlist_len], 
-                (struct sockaddr *) remote_addr, sizeof(struct sockaddr)) < 0) {
+        if (connect(sockfd[hostlist_len], res->ai_addr, res->ai_addrlen) < 0) {
             perror("connect() error");
             return -1;
         }
