@@ -175,7 +175,7 @@ int deliver_msg(struct SeqMessage *seq_msg) {
     printf("SeqMessage sender %d, msg_id %d\n", seq_msg->sender, seq_msg->msg_id);
     struct Message *msg_itr = msg_queue;
     while (msg_itr->next != NULL) {
-        printf("Message sender %d, msg_id %d, next %x\n", msg_itr->next->sender, msg_itr->next->msg_id, msg_itr->next->next);
+        //printf("Message sender %d, msg_id %d, next %x\n", msg_itr->next->sender, msg_itr->next->msg_id, msg_itr->next->next);
         if (seq_msg->sender == msg_itr->next->sender 
                 && seq_msg->msg_id == msg_itr->next->msg_id) {
             break;
