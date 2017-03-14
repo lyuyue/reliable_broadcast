@@ -187,6 +187,10 @@ int data_msg_handler(struct DataMessage *data_msg) {
     data_msg_copy->sender = data_msg->sender;
     data_msg_copy->msg_id = data_msg->msg_id;
     data_msg_copy->data = data_msg->data;
+
+    pthread_mutex_lock(&seq_lock);
+    seq ++;
+    pthread_mutex_unlock(&seq_lock);
     // send ack_msg
     pthread_t *new_thread_id = get_thread_id();
     pthread_create(new_thread_id, NULL, (void *) send_ack_msg, data_msg_copy);
@@ -295,7 +299,7 @@ int seq_msg_handler(struct SeqMessage *seq_msg) {
     printf("Receive SeqMessage %d from %d\n", seq_msg->msg_id, seq_msg->sender);
     pthread_mutex_lock(&seq_lock);
     if (seq < seq_msg->final_seq)
-        seq = seq_msg->final_seq;
+        seq = seq_msg->final_seq + 1;
     pthread_mutex_unlock(&seq_lock);
     deliver_msg(seq_msg);
 
