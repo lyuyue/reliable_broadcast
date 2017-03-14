@@ -172,13 +172,19 @@ int data_msg_handler(struct DataMessage *data_msg) {
     tmp_msg->msg_id = data_msg->msg_id;
 
     // check if Message exists in the message_queue to avoid redundant message
-    struct Message *itr = msg_queue->next;
-    while (itr != NULL) {
-        if (itr->sender == data_msg->sender && itr->msg_id == data_msg->msg_id) break;
-        itr = itr->next;
+    struct Message *msg_itr = msg_queue->next;
+    while (msg_itr != NULL) {
+        if (msg_itr->sender == data_msg->sender && msg_itr->msg_id == data_msg->msg_id) break;
+        msg_itr = msg_itr->next;
     }
 
-    if (itr == NULL) {
+    struct Message *deliver_itr = deliver_queue->next;
+    while (deliver_itr != NULL) {
+        if (deliver_itr->sender == data_msg->sender && deliver_itr->msg_id == data_msg->msg_id) break;
+        deliver_itr = deliver_itr->next;
+    }
+
+    if (msg_itr == NULL && deliver_itr == NULL) {
         tmp_msg->next = msg_queue->next;
         msg_queue->next = tmp_msg;
     }
