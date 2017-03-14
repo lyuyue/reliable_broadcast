@@ -3,11 +3,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <pthread.h>
+#include <string.h>
+#include <unistd.h>
 
+#include "constants.h"
 #include "message.h"
 #include "tcp_helper.h"
-
 
 struct thread {
     pthread_t tid;
@@ -29,6 +32,7 @@ struct sockaddr_in *remote_addr;
 struct AckRecordHeader ack_list[MAX_MSG_COUNT];
 
 int port = 0;
+char *hostfile;
 int msg_count = 0;
 int max_msg_count = 0;
 int seq = 0;
@@ -38,9 +42,101 @@ pthread_mutex_t seq_lock;
 
 pthread_t * get_thread_id() {
     struct thread *new_thread = (struct thread *) malloc(sizeof(struct thread));
-    new_thread->next = head->next;
-    head->next = new_thread;
-    return &new_thread->tid
+    new_thread->next = thread_head->next;
+    thread_head->next = new_thread;
+    return &new_thread->tid;
+}
+
+void * tcp_send(void *args) {
+    uint32_t *msg_type = (uint32_t *) args;
+    int len = 0;
+    if (*msg_type == DATA_MSG_TYPE) len = DATA_MSG_SIZE;
+    if (*msg_type == ACK_MSG_TYPE)  len = ACK_MSG_SIZE;
+    if (*msg_type == SEQ_MSG_TYPE)  len = SEQ_MSG_SIZE;
+
+    int *sockfd_addr = (int *) ((void *) args + len);
+    if (send(*sockfd_addr, (char *) args, len, 0) != len) {
+        perror("send() error");
+    }
+    return 0;
+}
+
+
+void * send_data_msg(uint32_t *msg_id) {
+    struct DataMessage *data_msg[hostlist_len];
+    pthread_t pthread_ids[hostlist_len];
+
+    for (int i = 1; i < hostlist_len; i++) {
+        if (i == self_id) continue;
+        data_msg[i] = (struct DataMessage *) malloc(DATA_MSG_SIZE + sizeof(int));
+        data_msg[i]->type = DATA_MSG_TYPE;
+        data_msg[i]->sender = self_id;
+        data_msg[i]->msg_id = *msg_id;
+        data_msg[i]->data = *msg_id;
+
+        int *sockfd_data = (int *) ((struct DataMessage *) data_msg[i] + 1);
+        *sockfd_data = sockfd[i]; 
+
+        pthread_create(&pthread_ids[i], NULL, tcp_send, (void *) data_msg[i]);
+    }
+
+    for (int i = 1; i < hostlist_len; i++) {
+        if (i == self_id) continue;
+        pthread_join(pthread_ids[i], NULL);
+        free(data_msg[i]);
+    }
+
+    return 0;
+}
+
+void * send_ack_msg(struct DataMessage *data_msg) {
+    struct AckMessage *ack_msg = (struct AckMessage *) malloc(ACK_MSG_SIZE + sizeof(int));
+    ack_msg->type = ACK_MSG_TYPE;
+    ack_msg->sender = data_msg->sender;
+    ack_msg->msg_id = data_msg->msg_id;
+    pthread_mutex_lock(&seq_lock);
+    seq ++;
+    ack_msg->proposed_seq = seq;
+    pthread_mutex_unlock(&seq_lock);
+    ack_msg->proposer = self_id;
+
+    int *sockfd_data = (int *) (ack_msg + 1);
+    *sockfd_data = sockfd[data_msg->sender];
+
+    // send AckMessage
+    pthread_t pthread_id;
+    pthread_create(&pthread_id, NULL, tcp_send, (void *) ack_msg);
+    pthread_join(pthread_id, NULL);
+    free(ack_msg);
+
+    return 0;
+}
+
+void * send_seq_msg(struct SeqMessage *seq_data) {
+    struct SeqMessage *seq_msg[hostlist_len];
+    pthread_t pthread_ids[hostlist_len];
+
+    for (int i = 1; i < hostlist_len; i++) {
+        if (i == self_id) continue;
+        seq_msg[i] = (struct SeqMessage *) malloc(SEQ_MSG_SIZE + sizeof(int));
+        seq_msg[i]->type = SEQ_MSG_TYPE;
+        seq_msg[i]->sender = seq_data->sender;
+        seq_msg[i]->msg_id = seq_data->msg_id;
+        seq_msg[i]->final_seq = seq_data->final_seq;
+        seq_msg[i]->final_seq_proposer = seq_data->final_seq_proposer;
+
+        int *sockfd_data = (int *) ((struct SeqMessage *) seq_msg[i] + 1);
+        *sockfd_data = sockfd[i]; 
+
+        pthread_create(&pthread_ids[i], NULL, tcp_send, seq_msg[i]);
+    }
+
+    for (int i = 1; i < hostlist_len; i++) {
+        if (i == self_id) continue;
+        pthread_join(pthread_ids[i], NULL);
+        free(seq_msg[i]);
+    }
+    return 0;
 }
 
 int data_msg_handler(struct DataMessage *data_msg) {
@@ -55,7 +151,7 @@ int data_msg_handler(struct DataMessage *data_msg) {
 
     // send ack_msg
     pthread_t *new_thread_id = get_thread_id();
-    pthread_create(new_thread_id, send_ack_msg, data_msg);
+    pthread_create(new_thread_id, NULL, (void *) send_ack_msg, data_msg);
     return 0;
 }
 
@@ -150,7 +246,9 @@ int ack_msg_handler(struct AckMessage *ack_msg) {
 
         // broadcast final_seq
         pthread_t *new_thread_id = get_thread_id();
-        pthread_create(new_thread_id, send_seq_msg, seq_msg);
+        pthread_create(new_thread_id, NULL, (void *) send_seq_msg, seq_msg);
+
+        free(seq_msg);
     }
 
     return 0;
@@ -177,7 +275,7 @@ int main(int argc, char* argv[]) {
     bzero(&ack_list[0], sizeof(char *) * MAX_MSG_COUNT);
 
     bzero(&sockfd[0], sizeof(int) * MAX_HOST);
-    bzero(&hostlist[0], sizeof(struct addrinfo) * MAX_HOST);
+    bzero(&sockfd[0], sizeof(struct addrinfo) * MAX_HOST);
 
     if (pthread_mutex_init(&seq_lock, NULL) != 0) {
         perror("pthread_mutex_init() error");
@@ -227,18 +325,18 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        memset(hints, 0, sizeof(struct addrinfo));
+        memset(&hints, 0, sizeof(struct addrinfo));
         hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_CANONNAME;
 
-        if (getaddrinfo(line_buffer, "http", &hints, &info)) != 0) {
+        if (getaddrinfo(line_buffer, "http", &hints, &info) != 0) {
             perror("getaddrinfo() error");
             return -1;
         }
 
         sockfd[hostlist_len] = -1;
-        remote_addr = info->ai_addr;
+        remote_addr = (struct sockaddr_in *) info->ai_addr;
         remote_addr->sin_family = AF_INET;
         remote_addr->sin_port = htons(port);
 
@@ -275,10 +373,10 @@ int main(int argc, char* argv[]) {
         perror("listen() error");
         return -1;
     }
-    for (int i = self_id + 1; i < hostlist_len; ;) {
+    for (int i = self_id + 1; i < hostlist_len;) {
         struct sockaddr_in client_addr;
         int client_len = sizeof(client_addr);
-        sockfd[i] = accept(self_sock, (struct sockaddr *) &client_addr, &client_len);
+        sockfd[i] = accept(self_sock, (struct sockaddr *) &client_addr, (socklen_t *) &client_len);
         if (sockfd[i] < 0) {
             continue;
         }
@@ -310,31 +408,30 @@ int main(int argc, char* argv[]) {
 
             uint32_t *msg_type = (uint32_t *) recv_buf;
 
-            switch (*msg_type) {
-                // DataMessage
-                case DATA_MSG_TYPE:
-                    struct DataMessage *data_msg = (struct DataMessage *) recv_buf;
-                    if (data_msg_handler(data_msg) != 0) {
-                        perror("data_msg_handler() error");
-                        return -1;
-                    }
-                    break;
-                // AckMessage
-                case ACK_MSG_TYPE:
-                    struct AckMessage *ack_msg = (struct AckMessage *) recv_buf;
-                    if (ack_msg_handler(ack_msg) != 0) {
-                        perror("ack_msg_handler error");
-                        return -1;
-                    }
-                    break;
+            // DataMessage
+            if (*msg_type == DATA_MSG_TYPE) {
+                struct DataMessage *data_msg = (struct DataMessage *) recv_buf;
+                if (data_msg_handler(data_msg) != 0) {
+                    perror("data_msg_handler() error");
+                    return -1;
+                }
+            }
+
+            // AckMessage
+            if (*msg_type == ACK_MSG_TYPE) {
+                struct AckMessage *ack_msg = (struct AckMessage *) recv_buf;
+                if (ack_msg_handler(ack_msg) != 0) {
+                    perror("ack_msg_handler error");
+                    return -1;
+                }
+            }
                 // SeqMessage
-                case SEQ_MSG_TYPE:
-                    struct SeqMessage *seq_msg = (struct SeqMessage *) recv_buf;
-                    if (seq_msg_handler(seq_msg) != 0) {
-                        perror("seq_msg_handler error");
-                        return -1;
-                    }
-                    break;
+            if (*msg_type == SEQ_MSG_TYPE) {
+                struct SeqMessage *seq_msg = (struct SeqMessage *) recv_buf;
+                if (seq_msg_handler(seq_msg) != 0) {
+                    perror("seq_msg_handler error");
+                    return -1;
+                }
             }
         }
 
@@ -357,14 +454,14 @@ int main(int argc, char* argv[]) {
             }
 
             pthread_t *new_thread_id = get_thread_id();
-            pthread_create(new_thread_id, NULL, send_data_msg, msg_count);
+            pthread_create(new_thread_id, NULL, (void *) send_data_msg, &msg_count);
             // increase counter
             msg_count ++;
         }
 
 
         // free thread_id info
-        struct thread *thread_itr = head;
+        struct thread *thread_itr = thread_head;
         while (thread_itr->next != NULL) {
             if (pthread_kill(thread_itr->next->tid, 0) == 0) {
                 struct thread *tmp = thread_itr->next->next;

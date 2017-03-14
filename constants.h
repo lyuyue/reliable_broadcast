@@ -3,7 +3,7 @@
 #define SEQ_MSG_TYPE     3
 
 #define MAX_MSG_COUNT   1000
-#define MAX_ATTMPT      3
+#define MAX_HOST        100
 #define MAX_PENDING     5
 
 #define MSG_SIZE        sizeof(struct Message)
@@ -11,6 +11,9 @@
 
 #define ACK_MSG_SIZE    sizeof(struct AckMessage)
 #define DATA_MSG_SIZE   sizeof(struct DataMessage)
+#define SEQ_MSG_SIZE    sizeof(struct SeqMessage)
 
 #define ENDLESS_LOOP    1
 #define SEND_FLAG       0
+
+#define BUF_SIZE        512
