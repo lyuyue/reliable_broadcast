@@ -337,7 +337,7 @@ int main(int argc, char* argv[]) {
         }
 
         sockfd[hostlist_len] = -1;
-        remote_addr = (struct sockaddr_in *) info->ai_addr;
+        remote_addr = (struct sockaddr_in *) &info->ai_addr;
         remote_addr->sin_family = AF_INET;
         remote_addr->sin_port = htons(port);
 
