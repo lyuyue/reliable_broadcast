@@ -284,7 +284,7 @@ int ack_msg_handler(struct AckMessage *ack_msg) {
         seq_msg->final_seq = ack_list[msg_id].max_seq;
         seq_msg->final_seq_proposer = ack_list[msg_id].max_proposer;
 
-        //deliver_msg(seq_msg);
+        deliver_msg(seq_msg);
 
         // broadcast final_seq
         pthread_t *new_thread_id = get_thread_id();
@@ -565,16 +565,6 @@ int main(int argc, char* argv[]) {
             // resend SeqMessage and reset SeqAckMessage count to 0
             for (int itr = 0; itr < msg_count; itr ++) {
                 if (ack_list[itr].list.next != NULL) {
-                    if (ack_list[itr].seq_ack_count == hostlist_len - 1) {
-                        struct SeqMessage *seq_msg = (struct SeqMessage *) malloc(SEQ_MSG_SIZE);
-                        seq_msg->type = SEQ_MSG_TYPE;
-                        seq_msg->sender = self_id;
-                        seq_msg->msg_id = itr;
-                        seq_msg->final_seq = ack_list[itr].max_seq;
-                        seq_msg->final_seq_proposer = ack_list[itr].max_proposer;
-
-                        deliver_msg(seq_msg);
-                    }
                     continue;
                 }
                 if (ack_list[itr].seq_ack_count < hostlist_len - 1) {
