@@ -152,6 +152,7 @@ void * send_seq_msg(struct SeqMessage *seq_data) {
 }
 
 void * send_seq_ack_msg(struct SeqAckMessage *seq_ack_msg) {
+    printf("send SeqAckMessage for %d to %d\n", seq_ack_msg->msg_id, seq_ack_msg->sender);
     if (send(sockfd[seq_ack_msg->sender], (char *) seq_ack_msg, SEQ_ACK_MSG_SIZE, 0) != SEQ_ACK_MSG_SIZE) {
         perror("send() error");
     }
@@ -285,6 +286,7 @@ int seq_msg_handler(struct SeqMessage *seq_msg) {
     if (seq < seq_msg->final_seq)
         seq = seq_msg->final_seq;
     pthread_mutex_unlock(&seq_lock);
+    deliver_msg(seq_msg);
 
     pthread_t *new_thread_id = get_thread_id();
     struct SeqAckMessage *seq_ack_msg = (struct SeqAckMessage *) malloc(SEQ_ACK_MSG_SIZE);
@@ -292,8 +294,6 @@ int seq_msg_handler(struct SeqMessage *seq_msg) {
     seq_ack_msg->sender = seq_msg->sender;
     seq_ack_msg->msg_id = seq_msg->msg_id;
     pthread_create(new_thread_id, NULL, (void *) send_seq_ack_msg, seq_ack_msg);
-
-    deliver_msg(seq_msg);
     return 0;
 }
 
@@ -515,18 +515,6 @@ int main(int argc, char* argv[]) {
         } else {
             reliable_flag = 1;
         }
-
-        // for test
-        // for (int i = 0; i <= msg_count; i ++) {
-        //     if (ack_list[i].list.next != NULL) {
-        //         printf("\nAck for msg %d\n", i);
-        //         struct AckRecord *itr = &ack_list[i].list;
-        //         while (itr->next != NULL) {
-        //             printf("%d ", itr->next->receiver_id);
-        //             itr = itr->next;
-        //         }
-        //     }
-        // }
 
         if (loop_count % RELIABLE_THR  == 0 && reliable_flag > 0) {
             loop_count = 0;
