@@ -68,7 +68,7 @@ void * send_data_msg(uint32_t *msg_id) {
     struct DataMessage *data_msg[hostlist_len];
     pthread_t pthread_ids[hostlist_len];
 
-    for (int i = 1; i < hostlist_len; i++) {
+    for (int i = 1; i <= hostlist_len; i++) {
         if (i == self_id) continue;
         data_msg[i] = (struct DataMessage *) malloc(DATA_MSG_SIZE + sizeof(int));
         data_msg[i]->type = DATA_MSG_TYPE;
@@ -82,7 +82,7 @@ void * send_data_msg(uint32_t *msg_id) {
         pthread_create(&pthread_ids[i], NULL, tcp_send, (void *) data_msg[i]);
     }
 
-    for (int i = 1; i < hostlist_len; i++) {
+    for (int i = 1; i <= hostlist_len; i++) {
         if (i == self_id) continue;
         pthread_join(pthread_ids[i], NULL);
         free(data_msg[i]);
@@ -118,7 +118,7 @@ void * send_seq_msg(struct SeqMessage *seq_data) {
     struct SeqMessage *seq_msg[hostlist_len];
     pthread_t pthread_ids[hostlist_len];
 
-    for (int i = 1; i < hostlist_len; i++) {
+    for (int i = 1; i <= hostlist_len; i++) {
         if (i == self_id) continue;
         seq_msg[i] = (struct SeqMessage *) malloc(SEQ_MSG_SIZE + sizeof(int));
         seq_msg[i]->type = SEQ_MSG_TYPE;
@@ -133,7 +133,7 @@ void * send_seq_msg(struct SeqMessage *seq_data) {
         pthread_create(&pthread_ids[i], NULL, tcp_send, seq_msg[i]);
     }
 
-    for (int i = 1; i < hostlist_len; i++) {
+    for (int i = 1; i <= hostlist_len; i++) {
         if (i == self_id) continue;
         pthread_join(pthread_ids[i], NULL);
         free(seq_msg[i]);
@@ -374,7 +374,7 @@ int main(int argc, char* argv[]) {
         perror("listen() error");
         return -1;
     }
-    for (int i = self_id + 1; i < hostlist_len;) {
+    for (int i = self_id + 1; i <= hostlist_len;) {
         printf("Listening connection from %d\n", i);
         struct sockaddr_in client_addr;
         int client_len = sizeof(client_addr);
@@ -386,7 +386,7 @@ int main(int argc, char* argv[]) {
         i ++;
     }
 
-    for (int i = 1; i < hostlist_len; i++) {
+    for (int i = 1; i <= hostlist_len; i++) {
         if (i == self_id) continue;
         set_timeout(sockfd[i]);
     }
@@ -397,15 +397,14 @@ int main(int argc, char* argv[]) {
     while (ENDLESS_LOOP) {
         char recv_buf[BUF_SIZE];
 
-        for (int i = 1; i < hostlist_len; i++) {
+        for (int i = 1; i <= hostlist_len; i++) {
             if (i == self_id) continue;
 
             bzero(recv_buf, BUF_SIZE);
 
             int bytes_recv = recv(sockfd[i], recv_buf, BUF_SIZE, 0);
             if (bytes_recv < 0) {
-                perror("recv() error");
-                return -1;
+                perror("");
             }
 
             uint32_t *msg_type = (uint32_t *) recv_buf;
@@ -448,7 +447,7 @@ int main(int argc, char* argv[]) {
             tmp_msg->next = msg_queue->next;
             msg_queue->next = tmp_msg;
 
-            for (int i = 1; i < hostlist_len; i ++) {
+            for (int i = 1; i <= hostlist_len; i ++) {
                 if (i == self_id) continue;
                 struct AckRecord *new_record = (struct AckRecord *) malloc(sizeof(struct AckRecord));
                 new_record->next = ack_list[msg_count].list.next;
