@@ -485,6 +485,7 @@ int main(int argc, char* argv[]) {
             // AckSeqMessage
             if (*msg_type == SEQ_ACK_MSG_TYPE) {
                 struct SeqAckMessage *seq_ack_msg = (struct SeqAckMessage *) recv_buf;
+                printf("receive SeqAckMessage for %d from %d\n", seq_ack_msg->msg_id, i);
                 ack_list[seq_ack_msg->msg_id].seq_ack_count ++;
             }
         }
