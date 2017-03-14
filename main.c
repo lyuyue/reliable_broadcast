@@ -469,6 +469,7 @@ int main(int argc, char* argv[]) {
             for (int i = 1; i <= hostlist_len; i ++) {
                 if (i == self_id) continue;
                 struct AckRecord *new_record = (struct AckRecord *) malloc(sizeof(struct AckRecord));
+                new_record->receiver_id = i;
                 new_record->next = ack_list[msg_count].list.next;
                 ack_list[msg_count].list.next = new_record;
             }
