@@ -217,10 +217,10 @@ int deliver_msg(struct SeqMessage *seq_msg) {
             }
             break;
         }
-    }
 
-    cur_msg->next = deliver_itr->next;
-    deliver_itr->next = cur_msg;
+        cur_msg->next = deliver_itr->next;
+        deliver_itr->next = cur_msg;
+    }
 
     printf("%d: Processed message %d from sender %d with seq (%d, %d)\n",
         self_id, cur_msg->msg_id, cur_msg->sender, cur_msg->seq, cur_msg->seq_proposer);
@@ -465,7 +465,7 @@ int main(int argc, char* argv[]) {
             tmp_msg->next = msg_queue->next;
             msg_queue->next = tmp_msg;
 
-            // for test
+            // for testse
             struct Message *msg_itr = msg_queue;
             while (msg_itr->next != NULL) {
                 printf("Message sender %d, msg_id %d, next %x\n", msg_itr->next->sender, msg_itr->next->msg_id, msg_itr->next->next);
