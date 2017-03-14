@@ -20,8 +20,7 @@ Notice that host **MUST** be started in exact same order they show up in the hos
 **main.c**          : main program  
 
 ### State diagrams:
-![Alt][1]
-[1]: /diagram/reliable.png
+![Alt](/diagram/reliable.png)
 
 
 ### Design decisions
