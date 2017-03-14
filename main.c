@@ -146,6 +146,8 @@ void * send_seq_msg(struct SeqMessage *seq_data) {
         pthread_join(pthread_ids[i], NULL);
         free(seq_msg[i]);
     }
+
+    free(seq_data);
     return 0;
 }
 
@@ -274,8 +276,6 @@ int ack_msg_handler(struct AckMessage *ack_msg) {
         // broadcast final_seq
         pthread_t *new_thread_id = get_thread_id();
         pthread_create(new_thread_id, NULL, (void *) send_seq_msg, seq_msg);
-
-        free(seq_msg);
     }
 
     return 0;
