@@ -553,6 +553,9 @@ int main(int argc, char* argv[]) {
             }
 
             for (int itr = 0; itr < msg_count; itr ++) {
+                if (ack_list[itr].list.next != NULL) {
+                    continue;
+                }
                 if (ack_list[itr].seq_ack_count < hostlist_len - 1) {
                     ack_list[itr].seq_ack_count = 0;
                     struct SeqMessage *seq_msg = (struct SeqMessage *) malloc(SEQ_MSG_SIZE);
