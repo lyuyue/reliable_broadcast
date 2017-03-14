@@ -29,7 +29,7 @@ Notice that host **MUST** be started in exact same order they show up in the hos
 
 
 ### Design decisions
-- If two message are delivered with same **seq**, then seq with a lower id of proposer is considered 'happened before' the other one, in this case, we can ensure the total ordering.
+- If two message are delivered with same **seq**, then seq with a lower id of proposer is considered 'happened before' the other one, in this case, we can break the tie and gurantee a total ordering.
 - Multithread programming is applied, main thread only focus on listening from other hosts and deal with the message received.
 - All send() are executed by a independent thread, a mutex_lock is implemented to keep key information **seq** safe, in this case we reach a balance between correctness and performance.
 - A randomized delay is introduced to any Message send() to make a simulation of network latency/disconnected link. The maximum seconds a thread might wait before send the message is 2 seconds, while it is subjected to change (MAX_DELAY in constants.h).
