@@ -190,10 +190,9 @@ int data_msg_handler(struct DataMessage *data_msg) {
 }
 
 int deliver_msg(struct SeqMessage *seq_msg) {
-    printf("SeqMessage sender %d, msg_id %d\n", seq_msg->sender, seq_msg->msg_id);
+    // printf("SeqMessage sender %d, msg_id %d\n", seq_msg->sender, seq_msg->msg_id);
     struct Message *msg_itr = msg_queue;
     while (msg_itr->next != NULL) {
-        //printf("Message sender %d, msg_id %d, next %x\n", msg_itr->next->sender, msg_itr->next->msg_id, msg_itr->next->next);
         if (seq_msg->sender == msg_itr->next->sender 
                 && seq_msg->msg_id == msg_itr->next->msg_id) {
             break;
@@ -204,7 +203,7 @@ int deliver_msg(struct SeqMessage *seq_msg) {
     }
 
     if (msg_itr->next == NULL) {
-        perror("Invalid SeqMessage");
+        perror("Delivered Message");
         return -1;
     }
 
@@ -359,6 +358,7 @@ int main(int argc, char* argv[]) {
         perror("fopen() error");
     }
 
+    // try TCP connection to started hosts
     while (fgets(line_buffer, BUF_SIZE, (FILE *) fp)) {
         hostlist_len ++;
         if (self_id > 0) continue;
@@ -401,6 +401,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    // initialize self socket addr
     memset(&self_addr, 0, sizeof(self_addr));
     self_addr.sin_family = AF_INET;
     self_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -412,10 +413,13 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    // listen to local socket
     if (listen(self_sock, MAX_PENDING) < 0) {
         perror("listen() error");
         return -1;
     }
+
+    // waitiing for hosts started later localhost
     for (int i = self_id + 1; i <= hostlist_len;) {
         printf("Listening connection from %d\n", i);
         struct sockaddr_in client_addr;
@@ -428,16 +432,13 @@ int main(int argc, char* argv[]) {
         i ++;
     }
 
+    // set up a timeout for socket to unblock
     for (int i = 1; i <= hostlist_len; i++) {
         if (i == self_id) continue;
         set_timeout(sockfd[i]);
     }
 
     // sleep for all connection reach stable
-    for (int i = 1; i <= hostlist_len; i++) {
-        printf("sockfd[%d]: %d\n", i, sockfd[i]);
-
-    }
     sleep(3);
 
     int loop_count = 0;
@@ -446,11 +447,11 @@ int main(int argc, char* argv[]) {
         loop_count ++;
         char recv_buf[BUF_SIZE];
 
+        // listen from other hosts for messsage
         for (int i = 1; i <= hostlist_len; i++) {
             if (i == self_id) continue;
 
             bzero(recv_buf, BUF_SIZE);
-
             recv(sockfd[i], recv_buf, BUF_SIZE, 0);
 
             uint32_t *msg_type = (uint32_t *) recv_buf;
@@ -490,8 +491,9 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // send data_msg randomly
+        // send data_msg
         if (msg_count < max_msg_count) {
+            // add a new Message entity to local message_queue
             struct Message *tmp_msg = (struct Message *) malloc(MSG_SIZE);
             tmp_msg->seq = -1;
             tmp_msg->seq_proposer = -1;
@@ -501,13 +503,7 @@ int main(int argc, char* argv[]) {
             tmp_msg->next = msg_queue->next;
             msg_queue->next = tmp_msg;
 
-            // for testse
-            struct Message *msg_itr = msg_queue;
-            while (msg_itr->next != NULL) {
-                //printf("Message sender %d, msg_id %d, next %x\n", msg_itr->next->sender, msg_itr->next->msg_id, msg_itr->next->next);
-                msg_itr = msg_itr->next;
-            }
-
+            // create a linked list with all hosts expected to send an AckMessage
             for (int i = 1; i <= hostlist_len; i ++) {
                 if (i == self_id) continue;
                 struct AckRecord *new_record = (struct AckRecord *) malloc(sizeof(struct AckRecord));
@@ -518,6 +514,8 @@ int main(int argc, char* argv[]) {
 
             pthread_t *new_thread_id = get_thread_id();
             int cur_msg_count = msg_count;
+            // start thread to finish send() with async mode.
+            // a random delay is added in the tcp_send function to simulate message delay
             pthread_create(new_thread_id, NULL, (void *) send_data_msg, &cur_msg_count);
             // increase counter
             msg_count ++;
@@ -525,7 +523,10 @@ int main(int argc, char* argv[]) {
             reliable_flag = 1;
         }
 
+        // After all DataMessage sent, periodically check if any Message lost
         if (loop_count % RELIABLE_THR  == 0 && reliable_flag > 0) {
+            // for any lost DataMessage/AckMessage
+            // resend DataMessage, reset list with hosts expected to send AckMessage
             loop_count = 0;
             for (int itr = 0; itr < msg_count; itr++) {
                 // delivered msg
@@ -552,6 +553,8 @@ int main(int argc, char* argv[]) {
                 pthread_create(new_thread_id, NULL, (void *) send_data_msg, &cur_msg_count);
             }
 
+            // for any lost SeqMessage/SeqAckMessage
+            // resend SeqMessage and reset SeqAckMessage count to 0
             for (int itr = 0; itr < msg_count; itr ++) {
                 if (ack_list[itr].list.next != NULL) {
                     continue;
@@ -571,7 +574,6 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-
 
         // free thread_id info
         struct thread *thread_itr = thread_head;

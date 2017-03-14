@@ -9,6 +9,7 @@ void set_timeout(int sockfd) {
     tv.tv_sec = 0;
     tv.tv_usec = 10;
 
+    // set socket timeout
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
         perror("setsockopt() error");
     }
