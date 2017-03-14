@@ -137,6 +137,7 @@ void * send_seq_msg(struct SeqMessage *seq_data) {
         int *sockfd_data = (int *) ((struct SeqMessage *) seq_msg[i] + 1);
         *sockfd_data = sockfd[i]; 
 
+        printf("send SeqMessage to %d\n", seq_msg[i]->sender);
         pthread_create(&pthread_ids[i], NULL, tcp_send, seq_msg[i]);
     }
 
@@ -159,7 +160,7 @@ int data_msg_handler(struct DataMessage *data_msg) {
     tmp_msg->next = msg_queue->next;
     msg_queue->next = tmp_msg;
 
-    // TODO:
+    // TODO:a
     struct Message *msg_itr = msg_queue;
     while (msg_itr->next != NULL) {
         printf("sender %d msg_id %d\n", msg_itr->next->sender, msg_itr->next->msg_id);
@@ -178,6 +179,7 @@ int data_msg_handler(struct DataMessage *data_msg) {
 }
 
 int deliver_msg(struct SeqMessage *seq_msg) {
+    printf("SeqMessage sender %d, msg_id %d\n", seq_msg->sender, seq_msg->msg_id);
     struct Message *msg_itr = msg_queue;
     while (msg_itr->next != NULL) {
         printf("sender %d msg_id %d\n", msg_itr->next->sender, msg_itr->next->msg_id);
