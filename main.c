@@ -151,6 +151,14 @@ void * send_seq_msg(struct SeqMessage *seq_data) {
     return 0;
 }
 
+void * send_seq_ack_msg(struct SeqAckMessage *seq_ack_msg) {
+    if (send(sockfd[seq_ack_msg->sender], (char *) seq_ack_msg, SEQ_ACK_MSG_SIZE, 0) != SEQ_ACK_MSG_SIZE) {
+        perror("send() error");
+    }
+    free(seq_ack_msg);
+    return 0;
+}
+
 int data_msg_handler(struct DataMessage *data_msg) {
     printf("Receive DataMessage %d from %d\n", data_msg->msg_id, data_msg->sender);
     struct Message *tmp_msg = (struct Message *) malloc(MSG_SIZE);
@@ -277,6 +285,13 @@ int seq_msg_handler(struct SeqMessage *seq_msg) {
     if (seq < seq_msg->final_seq)
         seq = seq_msg->final_seq;
     pthread_mutex_unlock(&seq_lock);
+
+    pthread_t *new_thread_id = get_thread_id();
+    struct SeqAckMessage *seq_ack_msg = (struct SeqAckMessage *) malloc(SEQ_ACK_MSG_SIZE);
+    seq_ack_msg->type = SEQ_ACK_MSG_TYPE;
+    seq_ack_msg->sender = seq_msg->sender;
+    seq_ack_msg->msg_id = seq_msg->msg_id;
+    pthread_create(new_thread_id, NULL, (void *) send_seq_ack_msg, seq_ack_msg);
 
     deliver_msg(seq_msg);
     return 0;
@@ -449,13 +464,20 @@ int main(int argc, char* argv[]) {
                     return -1;
                 }
             }
-                // SeqMessage
+            
+            // SeqMessage
             if (*msg_type == SEQ_MSG_TYPE) {
                 struct SeqMessage *seq_msg = (struct SeqMessage *) recv_buf;
                 if (seq_msg_handler(seq_msg) != 0) {
                     perror("seq_msg_handler error");
                     return -1;
                 }
+            }
+
+            // AckSeqMessage
+            if (*msg_type == SEQ_ACK_MSG_TYPE) {
+                struct SeqAckMessage *seq_ack_msg = (struct SeqAckMessage *) recv_buf;
+                ack_list[seq_ack_msg->msg_id].seq_ack_count ++;
             }
         }
 
@@ -506,7 +528,7 @@ int main(int argc, char* argv[]) {
         //     }
         // }
 
-        if (loop_count % 1500  == 0 && reliable_flag > 0) {
+        if (loop_count % RELIABLE_THR  == 0 && reliable_flag > 0) {
             loop_count = 0;
             for (int itr = 0; itr < msg_count; itr++) {
                 // delivered msg
@@ -531,7 +553,22 @@ int main(int argc, char* argv[]) {
                 pthread_t *new_thread_id = get_thread_id();
                 int cur_msg_count = itr;
                 pthread_create(new_thread_id, NULL, (void *) send_data_msg, &cur_msg_count);
+            }
 
+            for (int itr = 0; itr < msg_count; itr ++) {
+                if (ack_list[itr].seq_ack_count < hostlist_len - 1) {
+                    ack_list[itr].seq_ack_count = 0;
+                    struct SeqMessage *seq_msg = (struct SeqMessage *) malloc(SEQ_MSG_SIZE);
+                    seq_msg->type = SEQ_MSG_TYPE;
+                    seq_msg->sender = self_id;
+                    seq_msg->msg_id = itr;
+                    seq_msg->final_seq = ack_list[itr].max_seq;
+                    seq_msg->final_seq_proposer = ack_list[itr].max_proposer;
+
+                    // broadcast final_seq
+                    pthread_t *new_thread_id = get_thread_id();
+                    pthread_create(new_thread_id, NULL, (void *) send_seq_msg, seq_msg);
+                }
             }
         }
 
