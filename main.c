@@ -60,7 +60,6 @@ void * tcp_send(void *args) {
     sleep(delay_sec);
     
     int *sockfd_addr = (int *) ((void *) args + len);
-    printf("socket %d\n", *sockfd_addr);
     if (send(*sockfd_addr, (char *) args, len, 0) != len) {
         perror("send() error");
     }
@@ -108,11 +107,11 @@ void * send_ack_msg(struct DataMessage *data_msg) {
     ack_msg->proposer = self_id;
 
     int *sockfd_data = (int *) ((struct AckMessage *) ack_msg + 1);
-    printf("data_msg->sender %d\n", data_msg->sender);
     *sockfd_data = sockfd[data_msg->sender];
 
     // send AckMessage
     pthread_t pthread_id;
+    printf("send AckMessage for DataMessage %d to %d\n", ack_msg->msg_id, ack_msg->sender);
     pthread_create(&pthread_id, NULL, tcp_send, (void *) ack_msg);
     pthread_join(pthread_id, NULL);
     free(data_msg);
@@ -162,14 +161,6 @@ int data_msg_handler(struct DataMessage *data_msg) {
     tmp_msg->next = msg_queue->next;
     msg_queue->next = tmp_msg;
 
-    // TODO:a
-    struct Message *msg_itr = msg_queue;
-    while (msg_itr->next != NULL) {
-        printf("sender %d msg_id %d\n", msg_itr->next->sender, msg_itr->next->msg_id);
-        msg_itr = msg_itr->next;
-        continue;
-    }
-
     struct DataMessage *data_msg_copy = (struct DataMessage *) malloc(DATA_MSG_SIZE);
     data_msg_copy->sender = data_msg->sender;
     data_msg_copy->msg_id = data_msg->msg_id;
@@ -184,7 +175,6 @@ int deliver_msg(struct SeqMessage *seq_msg) {
     printf("SeqMessage sender %d, msg_id %d\n", seq_msg->sender, seq_msg->msg_id);
     struct Message *msg_itr = msg_queue;
     while (msg_itr->next != NULL) {
-        printf("sender %d msg_id %d\n", msg_itr->next->sender, msg_itr->next->msg_id);
         if (seq_msg->sender == msg_itr->next->sender 
                 && seq_msg->msg_id == msg_itr->next->msg_id) {
             break;
