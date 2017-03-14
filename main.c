@@ -277,6 +277,8 @@ int main(int argc, char* argv[]) {
     bzero(&ack_list[0], sizeof(struct AckRecordHeader) * MAX_MSG_COUNT);
     bzero(&sockfd[0], sizeof(int) * MAX_HOST);
 
+    thread_head = (struct thread *) malloc(sizeof(struct thread));
+    thread_head->next = NULL;
     if (pthread_mutex_init(&seq_lock, NULL) != 0) {
         perror("pthread_mutex_init() error");
         return -1;
@@ -469,6 +471,7 @@ int main(int argc, char* argv[]) {
                 free(thread_itr->next);
                 thread_itr->next = tmp;
             }
+            if (thread_itr->next == NULL) break;
             thread_itr = thread_itr->next; 
         }
     }
