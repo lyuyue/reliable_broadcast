@@ -509,6 +509,11 @@ int main(int argc, char* argv[]) {
         if (loop_count % 1500  == 0 && reliable_flag > 0) {
             loop_count = 0;
             for (int itr = 0; itr < msg_count; itr++) {
+                // delivered msg
+                if (ack_list[itr].list.next == NULL) {
+                    continue;
+                }
+
                 while (ack_list[itr].list.next != NULL) {
                     struct AckRecord *tmp = ack_list[itr].list.next;
                     ack_list[itr].list.next = tmp->next;
