@@ -115,6 +115,7 @@ void * send_ack_msg(struct DataMessage *data_msg) {
     pthread_t pthread_id;
     pthread_create(&pthread_id, NULL, tcp_send, (void *) ack_msg);
     pthread_join(pthread_id, NULL);
+    free(data_msg);
     free(ack_msg);
 
     return 0;
@@ -158,9 +159,13 @@ int data_msg_handler(struct DataMessage *data_msg) {
     tmp_msg->next = msg_queue->next;
     msg_queue->next = tmp_msg;
 
+    struct DataMessage *data_msg_copy = (struct DataMessage *) malloc(DATA_MSG_SIZE);
+    data_msg_copy->sender = data_msg->sender;
+    data_msg_copy->msg_id = data_msg->msg_id;
+    data_msg_copy->data = data_msg->data;
     // send ack_msg
     pthread_t *new_thread_id = get_thread_id();
-    pthread_create(new_thread_id, NULL, (void *) send_ack_msg, data_msg);
+    pthread_create(new_thread_id, NULL, (void *) send_ack_msg, data_msg_copy);
     return 0;
 }
 
