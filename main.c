@@ -273,10 +273,8 @@ int main(int argc, char* argv[]) {
     deliver_queue = (struct Message *) malloc(MSG_SIZE);
     deliver_queue->next = NULL;
 
-    bzero(&ack_list[0], sizeof(char *) * MAX_MSG_COUNT);
-
+    bzero(&ack_list[0], sizeof(struct AckRecordHeader) * MAX_MSG_COUNT);
     bzero(&sockfd[0], sizeof(int) * MAX_HOST);
-    bzero(&sockfd[0], sizeof(struct addrinfo) * MAX_HOST);
 
     if (pthread_mutex_init(&seq_lock, NULL) != 0) {
         perror("pthread_mutex_init() error");
@@ -306,6 +304,8 @@ int main(int argc, char* argv[]) {
             continue;
         }
     }
+
+    printf("port: %d, hostfile: %s, max_msg_count: %d\n", port, hostfile, max_msg_count);
 
     // build host_list
     FILE *fp;
