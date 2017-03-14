@@ -261,7 +261,7 @@ int deliver_msg(struct SeqMessage *seq_msg) {
 
 
 int ack_msg_handler(struct AckMessage *ack_msg) {
-    printf("Receive AckMessage for %d from %d\n", ack_msg->msg_id, ack_msg->proposer);
+    printf("Receive AckMessage propose %d for %d from %d\n", ack_msg->proposed_seq, ack_msg->msg_id, ack_msg->proposer);
 
     int msg_id = ack_msg->msg_id;
     if (ack_msg->proposed_seq > ack_list[msg_id].max_seq) {
