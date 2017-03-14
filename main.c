@@ -263,10 +263,18 @@ int deliver_msg(struct SeqMessage *seq_msg) {
 int ack_msg_handler(struct AckMessage *ack_msg) {
     printf("Receive AckMessage propose %d for %d from %d\n", ack_msg->proposed_seq, ack_msg->msg_id, ack_msg->proposer);
 
+    struct Message *deliver_itr = deliver_queue->next;
+    while (deliver_itr != NULL) {
+        if (ack_msg->sender == deliver_itr->sender && ack_msg->msg_id == deliver_itr->msg_id) break;
+        deliver_itr = deliver_itr->next;
+    }
+
     int msg_id = ack_msg->msg_id;
-    if (ack_msg->proposed_seq > ack_list[msg_id].max_seq) {
-        ack_list[msg_id].max_seq = ack_msg->proposed_seq;
-        ack_list[msg_id].max_proposer = ack_msg->proposer;
+    if (deliver_itr == NULL) {
+        if (ack_msg->proposed_seq > ack_list[msg_id].max_seq) {
+            ack_list[msg_id].max_seq = ack_msg->proposed_seq;
+            ack_list[msg_id].max_proposer = ack_msg->proposer;
+        }
     }
 
     struct AckRecord *itr = &ack_list[msg_id].list;
