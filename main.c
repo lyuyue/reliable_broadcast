@@ -82,6 +82,7 @@ void * send_data_msg(uint32_t *msg_id) {
         int *sockfd_data = (int *) ((struct DataMessage *) data_msg[i] + 1);
         *sockfd_data = sockfd[i]; 
 
+        printf("send DataMessage %d from %d to %d\n", *msg_id, self_id, i);
         pthread_create(&pthread_ids[i], NULL, tcp_send, (void *) data_msg[i]);
     }
 
@@ -145,6 +146,7 @@ void * send_seq_msg(struct SeqMessage *seq_data) {
 }
 
 int data_msg_handler(struct DataMessage *data_msg) {
+    printf("Receive DataMessage %d from %d\n", data_msg->msg_id, data_msg->sender);
     struct Message *tmp_msg = (struct Message *) malloc(MSG_SIZE);
     tmp_msg->seq = -1;
     tmp_msg->seq_proposer = -1;
@@ -220,6 +222,8 @@ int deliver_msg(struct SeqMessage *seq_msg) {
 
 
 int ack_msg_handler(struct AckMessage *ack_msg) {
+    printf("Receive AckMessage for %d from %d\n", ack_msg->msg_id, ack_msg->proposer);
+
     int msg_id = ack_msg->msg_id;
     if (ack_msg->proposed_seq > ack_list[msg_id].max_seq) {
         ack_list[msg_id].max_seq = ack_msg->proposed_seq;
@@ -261,6 +265,7 @@ int ack_msg_handler(struct AckMessage *ack_msg) {
 
 
 int seq_msg_handler(struct SeqMessage *seq_msg) {
+    printf("Receive SeqMessage %d from %d\n", seq_msg->msg_id, data_msg->sender);
     pthread_mutex_lock(&seq_lock);
     if (seq < seq_msg->final_seq)
         seq = seq_msg->final_seq;
