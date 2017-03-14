@@ -11,6 +11,11 @@ Just `make` and run the binary with folloing command:<br />
 
 Notice that host **MUST** be started in exact same order they show up in the hostfile.
 
+### Test Cases:
+- Typical size of the group is 3, while it is subjected to change.
+- Maximum seconds of a message send delay is 2 seconds.
+- Allow different number of hosts to send message concurrently.
+
 ###Code Architecture:  
 **README.md**       
 **Makefile**        
