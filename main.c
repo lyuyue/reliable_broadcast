@@ -213,22 +213,19 @@ int deliver_msg(struct SeqMessage *seq_msg) {
     // empty deliver_queue
     if (deliver_itr->next == NULL) {
         deliver_itr->next = cur_msg;
-        return 0; 
-    }
-
-    // insert to the head of deliver_queue
-    if (deliver_itr->next->seq > cur_msg->seq) {
+    } 
+    // insert to the head of deliver_queu
+    else if (deliver_itr->next->seq > cur_msg->seq) {
         cur_msg->next = deliver_itr->next;
         deliver_itr->next = cur_msg;
-        return 0;
-    }
-
-    while (deliver_itr->next != NULL) {
-        if (deliver_itr->next->seq < cur_msg->seq) {
-            deliver_itr = deliver_itr->next;
-            continue;
+    } else {
+        while (deliver_itr->next != NULL) {
+            if (deliver_itr->next->seq < cur_msg->seq) {
+                deliver_itr = deliver_itr->next;
+                continue;
+            }
+            break;
         }
-        break;
     }
 
     cur_msg->next = deliver_itr->next;
