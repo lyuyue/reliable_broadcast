@@ -341,7 +341,7 @@ int main(int argc, char* argv[]) {
             perror("socket() error");
             return -1;
         }
-
+        printf("Connecting %d ...\n", hostlist_len);
         if (connect(sockfd[hostlist_len], res->ai_addr, res->ai_addrlen) < 0) {
             perror("connect() error");
             return -1;
@@ -404,7 +404,7 @@ int main(int argc, char* argv[]) {
 
             int bytes_recv = recv(sockfd[i], recv_buf, BUF_SIZE, 0);
             if (bytes_recv < 0) {
-                perror("recv()error");
+                perror("recv() error");
                 return -1;
             }
 
