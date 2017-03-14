@@ -265,7 +265,7 @@ int ack_msg_handler(struct AckMessage *ack_msg) {
 
 
 int seq_msg_handler(struct SeqMessage *seq_msg) {
-    printf("Receive SeqMessage %d from %d\n", seq_msg->msg_id, data_msg->sender);
+    printf("Receive SeqMessage %d from %d\n", seq_msg->msg_id, seq_msg->sender);
     pthread_mutex_lock(&seq_lock);
     if (seq < seq_msg->final_seq)
         seq = seq_msg->final_seq;
