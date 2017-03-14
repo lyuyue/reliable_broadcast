@@ -136,7 +136,7 @@ void * send_seq_msg(struct SeqMessage *seq_data) {
         int *sockfd_data = (int *) ((struct SeqMessage *) seq_msg[i] + 1);
         *sockfd_data = sockfd[i]; 
 
-        printf("send SeqMessage for %d to %d\n", seq_msg[i]->msg_id, seq_msg[i]->sender);
+        printf("send SeqMessage for %d to %d\n", seq_msg[i]->msg_id, i);
         pthread_create(&pthread_ids[i], NULL, tcp_send, seq_msg[i]);
     }
 
@@ -488,16 +488,16 @@ int main(int argc, char* argv[]) {
         }
 
         // for test
-        for (int i = 0; i <= msg_count; i ++) {
-            if (ack_list[i].list.next != NULL) {
-                printf("\nAck for msg %d\n", i);
-                struct AckRecord *itr = &ack_list[i].list;
-                while (itr->next != NULL) {
-                    printf("%d ", itr->next->receiver_id);
-                    itr = itr->next;
-                }
-            }
-        }
+        // for (int i = 0; i <= msg_count; i ++) {
+        //     if (ack_list[i].list.next != NULL) {
+        //         printf("\nAck for msg %d\n", i);
+        //         struct AckRecord *itr = &ack_list[i].list;
+        //         while (itr->next != NULL) {
+        //             printf("%d ", itr->next->receiver_id);
+        //             itr = itr->next;
+        //         }
+        //     }
+        // }
 
 
         // free thread_id info
