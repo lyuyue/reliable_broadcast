@@ -4,7 +4,7 @@
 
 #define MAX_MSG_COUNT   1000
 #define MAX_HOST        100
-#define MAX_PENDING     5
+#define MAX_PENDING     100
 #define MAX_DELAY       1
 
 #define MSG_SIZE        sizeof(struct Message)

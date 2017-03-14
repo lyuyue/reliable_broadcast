@@ -468,7 +468,7 @@ int main(int argc, char* argv[]) {
             // for testse
             struct Message *msg_itr = msg_queue;
             while (msg_itr->next != NULL) {
-                printf("Message sender %d, msg_id %d, next %x\n", msg_itr->next->sender, msg_itr->next->msg_id, msg_itr->next->next);
+                //printf("Message sender %d, msg_id %d, next %x\n", msg_itr->next->sender, msg_itr->next->msg_id, msg_itr->next->next);
                 msg_itr = msg_itr->next;
             }
 
