@@ -504,6 +504,7 @@ int main(int argc, char* argv[]) {
         // }
 
         if (loop_count == 1500 && RELIABLE_FLAG) {
+            loop_count = 0;
             for (int itr = 0; itr <= msg_count; itr++) {
                 while (ack_list[itr].list.next != NULL) {
                     struct AckRecord *tmp = ack_list[itr].list.next;
