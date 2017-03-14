@@ -298,7 +298,7 @@ int ack_msg_handler(struct AckMessage *ack_msg) {
 int seq_msg_handler(struct SeqMessage *seq_msg) {
     printf("Receive SeqMessage %d from %d\n", seq_msg->msg_id, seq_msg->sender);
     pthread_mutex_lock(&seq_lock);
-    if (seq < seq_msg->final_seq)
+    if (seq <= seq_msg->final_seq)
         seq = seq_msg->final_seq + 1;
     pthread_mutex_unlock(&seq_lock);
     deliver_msg(seq_msg);
@@ -491,7 +491,7 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            // AckSeqMessage
+            // SeqAckMessage
             if (*msg_type == SEQ_ACK_MSG_TYPE) {
                 struct SeqAckMessage *seq_ack_msg = (struct SeqAckMessage *) recv_buf;
                 printf("receive SeqAckMessage for %d from %d\n", seq_ack_msg->msg_id, i);
