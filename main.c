@@ -269,6 +269,7 @@ int ack_msg_handler(struct AckMessage *ack_msg) {
         deliver_itr = deliver_itr->next;
     }
 
+    // no need to update delivered msg seq_info
     int msg_id = ack_msg->msg_id;
     if (deliver_itr == NULL) {
         if (ack_msg->proposed_seq > ack_list[msg_id].max_seq) {
