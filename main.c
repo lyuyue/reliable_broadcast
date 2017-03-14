@@ -168,8 +168,16 @@ int data_msg_handler(struct DataMessage *data_msg) {
     tmp_msg->sender = data_msg->sender;
     tmp_msg->msg_id = data_msg->msg_id;
 
-    tmp_msg->next = msg_queue->next;
-    msg_queue->next = tmp_msg;
+    struct Message *itr = msg_queue->next;
+    while (itr != NULL) {
+        if (itr->send == data_msg->sender && itr->msg_id == data_msg->msg_id) break;
+        itr = itr->next;
+    }
+
+    if (itr == NULL) {
+        tmp_msg->next = msg_queue->next;
+        msg_queue->next = tmp_msg;
+    }
 
     struct DataMessage *data_msg_copy = (struct DataMessage *) malloc(DATA_MSG_SIZE);
     data_msg_copy->sender = data_msg->sender;
