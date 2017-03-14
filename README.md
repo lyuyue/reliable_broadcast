@@ -16,7 +16,7 @@ Notice that host **MUST** be started in exact same order they show up in the hos
 - Maximum seconds of a message send delay is 2 seconds.
 - Allow different number of hosts to send message concurrently.
 
-###Code Architecture:  
+### Code Architecture:  
 **README.md**       
 **Makefile**        
 **constants.h**     : header file with constants definition   
