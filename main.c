@@ -175,6 +175,7 @@ int deliver_msg(struct SeqMessage *seq_msg) {
     printf("SeqMessage sender %d, msg_id %d\n", seq_msg->sender, seq_msg->msg_id);
     struct Message *msg_itr = msg_queue;
     while (msg_itr->next != NULL) {
+        printf("Message sender %d, msg_id %d, next %x\n", msg_itr->next->sender, msg_itr->next->msg_id, msg_itr->next->next);
         if (seq_msg->sender == msg_itr->next->sender 
                 && seq_msg->msg_id == msg_itr->next->msg_id) {
             break;
@@ -463,6 +464,13 @@ int main(int argc, char* argv[]) {
 
             tmp_msg->next = msg_queue->next;
             msg_queue->next = tmp_msg;
+
+            // for test
+            struct Message *msg_itr = msg_queue;
+            while (msg_itr->next != NULL) {
+                printf("Message sender %d, msg_id %d, next %x\n", msg_itr->next->sender, msg_itr->next->msg_id, msg_itr->next->next);
+                msg_itr = msg_itr->next;
+            }
 
             for (int i = 1; i <= hostlist_len; i ++) {
                 if (i == self_id) continue;
