@@ -60,6 +60,7 @@ void * tcp_send(void *args) {
     sleep(delay_sec);
     
     int *sockfd_addr = (int *) ((void *) args + len);
+    printf("socket %d\n", *sockfd_addr);
     if (send(*sockfd_addr, (char *) args, len, 0) != len) {
         perror("send() error");
     }
@@ -403,6 +404,10 @@ int main(int argc, char* argv[]) {
     }
 
     // sleep for all connection reach stable
+    for (int i = 1; i <= hostlist_len; i++) {
+        printf("sockfd[%d]: %d\n", i, sockfd[i]);
+
+    }
     sleep(3);
 
     while (ENDLESS_LOOP) {
