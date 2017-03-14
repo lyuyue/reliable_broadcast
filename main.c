@@ -382,7 +382,7 @@ int main(int argc, char* argv[]) {
         if (sockfd[i] < 0) {
             continue;
         }
-        printf("TCP connection to host %d established", i);
+        printf("TCP connection to host %d established\n", i);
         i ++;
     }
 
