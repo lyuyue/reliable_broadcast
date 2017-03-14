@@ -107,7 +107,7 @@ void * send_ack_msg(struct DataMessage *data_msg) {
     pthread_mutex_unlock(&seq_lock);
     ack_msg->proposer = self_id;
 
-    int *sockfd_data = (int *) (ack_msg + 1);
+    int *sockfd_data = (int *) ((struct AckMessage *) ack_msg + 1);
     *sockfd_data = sockfd[data_msg->sender];
 
     // send AckMessage
