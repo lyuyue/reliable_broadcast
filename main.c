@@ -159,6 +159,14 @@ int data_msg_handler(struct DataMessage *data_msg) {
     tmp_msg->next = msg_queue->next;
     msg_queue->next = tmp_msg;
 
+    // TODO:
+    struct Message *msg_itr = msg_queue;
+    while (msg_itr->next != NULL) {
+        printf("sender %d msg_id %d\n", msg_itr->next->sender, msg_itr->next->msg_id);
+        msg_itr = msg_itr->next;
+        continue;
+    }
+
     struct DataMessage *data_msg_copy = (struct DataMessage *) malloc(DATA_MSG_SIZE);
     data_msg_copy->sender = data_msg->sender;
     data_msg_copy->msg_id = data_msg->msg_id;
@@ -172,6 +180,7 @@ int data_msg_handler(struct DataMessage *data_msg) {
 int deliver_msg(struct SeqMessage *seq_msg) {
     struct Message *msg_itr = msg_queue;
     while (msg_itr->next != NULL) {
+        printf("sender %d msg_id %d\n", msg_itr->next->sender, msg_itr->next->msg_id);
         if (seq_msg->sender == msg_itr->next->sender 
                 && seq_msg->msg_id == msg_itr->next->msg_id) {
             break;
