@@ -16,5 +16,6 @@
 
 #define ENDLESS_LOOP    1
 #define SEND_FLAG       1
+#define RELIABLE_FLAG   1
 
 #define BUF_SIZE        512

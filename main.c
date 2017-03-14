@@ -366,6 +366,7 @@ int main(int argc, char* argv[]) {
     }
     
     free(line_buffer);
+    fclose(fp);
     printf("self_id: %d\n", self_id);
     printf("hostlist_len: %d\n", hostlist_len);
 
@@ -415,7 +416,10 @@ int main(int argc, char* argv[]) {
     }
     sleep(3);
 
+    int loop_count = 0;
+
     while (ENDLESS_LOOP) {
+        loop_count ++;
         char recv_buf[BUF_SIZE];
 
         for (int i = 1; i <= hostlist_len; i++) {
@@ -498,6 +502,29 @@ int main(int argc, char* argv[]) {
         //         }
         //     }
         // }
+
+        if (loop_count == 1500 && RELIABLE_FLAG) {
+            for (int itr = 0; itr <= msg_count; itr++) {
+                while (ack_list[itr].list.next != NULL) {
+                    struct AckRecord *tmp = ack_list[itr].list.next;
+                    ack_list[itr].list.next = tmp->next;
+                    free(tmp);
+                }
+
+                for (int i = 1; i <= hostlist_len; i ++) {
+                    if (i == self_id) continue;
+                    struct AckRecord *new_record = (struct AckRecord *) malloc(sizeof(struct AckRecord));
+                    new_record->receiver_id = i;
+                    new_record->next = ack_list[itr].list.next;
+                    ack_list[itr].list.next = new_record;
+                }
+
+                pthread_t *new_thread_id = get_thread_id();
+                int cur_msg_count = itr;
+                pthread_create(new_thread_id, NULL, (void *) send_data_msg, &cur_msg_count);
+
+            }
+        }
 
 
         // free thread_id info
