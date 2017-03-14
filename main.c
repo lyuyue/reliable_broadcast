@@ -341,9 +341,14 @@ int main(int argc, char* argv[]) {
         remote_addr->sin_family = AF_INET;
         remote_addr->sin_port = htons(port);
 
+        if ((sockfd[hostlist_len] = socket(AF_INET,SOCK_STREAM,0)) < 0) {
+            perror("socket() error");
+            return -1;
+        }
+
         if (connect(sockfd[hostlist_len], 
                 (struct sockaddr *) remote_addr, sizeof(struct sockaddr)) < 0) {
-            perror("connet() error");
+            perror("connect() error");
             return -1;
         }
     }
@@ -375,6 +380,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     for (int i = self_id + 1; i < hostlist_len;) {
+        printf("Listening connection from %d\n", i);
         struct sockaddr_in client_addr;
         int client_len = sizeof(client_addr);
         sockfd[i] = accept(self_sock, (struct sockaddr *) &client_addr, (socklen_t *) &client_len);
