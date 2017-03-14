@@ -108,6 +108,7 @@ void * send_ack_msg(struct DataMessage *data_msg) {
     ack_msg->proposer = self_id;
 
     int *sockfd_data = (int *) ((struct AckMessage *) ack_msg + 1);
+    printf("data_msg->sender %d\n", data_msg->sender);
     *sockfd_data = sockfd[data_msg->sender];
 
     // send AckMessage
