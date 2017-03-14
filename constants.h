@@ -5,6 +5,7 @@
 #define MAX_MSG_COUNT   1000
 #define MAX_HOST        100
 #define MAX_PENDING     5
+#define MAX_DELAY       2
 
 #define MSG_SIZE        sizeof(struct Message)
 #define ACK_HEADER_SIZE sizeof(struct AckRecordHeader)
@@ -14,6 +15,6 @@
 #define SEQ_MSG_SIZE    sizeof(struct SeqMessage)
 
 #define ENDLESS_LOOP    1
-#define SEND_FLAG       0
+#define SEND_FLAG       1
 
 #define BUF_SIZE        512

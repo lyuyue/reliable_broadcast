@@ -56,6 +56,9 @@ void * tcp_send(void *args) {
     if (*msg_type == ACK_MSG_TYPE)  len = ACK_MSG_SIZE;
     if (*msg_type == SEQ_MSG_TYPE)  len = SEQ_MSG_SIZE;
 
+    int delay_sec = rand() % MAX_DELAY;
+    sleep(delay_sec);
+    
     int *sockfd_addr = (int *) ((void *) args + len);
     if (send(*sockfd_addr, (char *) args, len, 0) != len) {
         perror("send() error");
@@ -285,6 +288,7 @@ int main(int argc, char* argv[]) {
     }
 
     gethostname(self_hostname, BUF_SIZE);
+    srand(time(NULL));
 
     // parse arguments
     int arg_itr = 1;
@@ -404,10 +408,7 @@ int main(int argc, char* argv[]) {
 
             bzero(recv_buf, BUF_SIZE);
 
-            int bytes_recv = recv(sockfd[i], recv_buf, BUF_SIZE, 0);
-            if (bytes_recv < 0) {
-                perror("");
-            }
+            recv(sockfd[i], recv_buf, BUF_SIZE, 0);
 
             uint32_t *msg_type = (uint32_t *) recv_buf;
 
@@ -457,7 +458,8 @@ int main(int argc, char* argv[]) {
             }
 
             pthread_t *new_thread_id = get_thread_id();
-            pthread_create(new_thread_id, NULL, (void *) send_data_msg, &msg_count);
+            int cur_msg_count = msg_count;
+            pthread_create(new_thread_id, NULL, (void *) send_data_msg, &cur_msg_count);
             // increase counter
             msg_count ++;
         }
