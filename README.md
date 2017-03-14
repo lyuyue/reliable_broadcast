@@ -29,6 +29,7 @@ Notice that host **MUST** be started in exact same order they show up in the hos
 
 
 ### Design decisions
+- If two message are delivered with same **seq**, then seq with a lower id of proposer is considered 'happened before' the other one, in this case, we can ensure the total ordering.
 - Multithread programming is applied, main thread only focus on listening from other hosts and deal with the message received.
 - All send() are executed by a independent thread, a mutex_lock is implemented to keep key information **seq** safe, in this case we reach a balance between correctness and performance.
 - A randomized delay is introduced to any Message send() to make a simulation of network latency/disconnected link. The maximum seconds a thread might wait before send the message is 2 seconds, while it is subjected to change (MAX_DELAY in constants.h).
@@ -37,4 +38,4 @@ Notice that host **MUST** be started in exact same order they show up in the hos
 - To ensure a total ordering, self_deliver happens after receiving all SeqAckMessage from other processes in the group.
 
 ### Implementation issues
-- The implementation is some kind of 'tricky' since we are given the total number of message 
+- The implementation is some kind of 'tricky' since we are given the total number of message, if the number of message is not given, we need a dynamic mechanism for 'reliable' retransimission.
